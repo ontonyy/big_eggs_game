@@ -3,12 +3,11 @@ package com.bigeggs.client.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.bigeggs.client.gameInfo.GameClient;
 
@@ -17,6 +16,8 @@ import javax.swing.*;
 public class ConnectScreen implements Screen {
     private final Stage stage;
     private final TextField username;
+    private SpriteBatch batch;
+    private BitmapFont font;
     private final TextButton connectButton;
     private final TextButton quitButton;
     private GameClient gameClient;
@@ -26,10 +27,13 @@ public class ConnectScreen implements Screen {
     public ConnectScreen() {
 
         final Skin skin = new Skin(Gdx.files.internal("uiskin.json"));
+        batch = new SpriteBatch();
 
         stage = new Stage();
         root = new Table();
-        root.setBounds(0, 0, 1000, 800);
+        root.setBounds(0, -100, 1000, 800);
+        font = new BitmapFont();
+        font.getData().scale(3f);
         username = new TextField("Username", skin);
         connectButton = new TextButton("Connect", skin);
         quitButton = new TextButton("Quit", skin);
@@ -77,6 +81,9 @@ public class ConnectScreen implements Screen {
     public void render(float delta) {
         stage.draw();
         stage.act(delta);
+        batch.begin();
+        font.draw(batch, "Cold line Tallinn", 300, 500);
+        batch.end();
     }
 
     @Override

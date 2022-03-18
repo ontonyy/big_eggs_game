@@ -5,7 +5,7 @@ import com.bigeggs.server.world.ServerWorld;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
-import models.EnemyAI;
+import models.Bullet;
 import models.GameCharacter;
 import models.Player;
 
@@ -16,7 +16,7 @@ import java.util.Map;
 public class ServerConnection {
     private Server server;
     private ServerWorld serverWorld = new ServerWorld();
-    static final int udpPort = 54777, tcpPort = 54555;
+    static final int udpPort = 8090, tcpPort = 8080;
 
     public ServerConnection() {
         try {
@@ -43,6 +43,7 @@ public class ServerConnection {
         server.getKryo().register(PacketUpdatePlayerInfo.class);
         server.getKryo().register(Player.class);
         server.getKryo().register(GameCharacter.class);
+        server.getKryo().register(PacketBullet.class);
 
         server.addListener(new Listener() {
             @Override
@@ -63,12 +64,11 @@ public class ServerConnection {
                     server.sendToAllTCP(removeAI);
 
                     // Add player on server and send to all client packet add player
-                    serverWorld.addPlayer(connection.getID(), connect.getPlayerName());
-                    for (Map.Entry<Integer, String> integerStringEntry : serverWorld.getPlayers().entrySet()) {
-                        PacketAddPlayer successConnect = (PacketAddPlayer) object;
-                        successConnect.setId(integerStringEntry.getKey());
-                        successConnect.setPlayerName(integerStringEntry.getValue());
-                        server.sendToAllTCP(successConnect);
+                    serverWorld.addPlayer(connection.getID(), connect);
+                    for (Map.Entry<Integer, PacketAddPlayer> integerPacketAddPlayerEntry : serverWorld.getPlayers().entrySet()) {
+                        PacketAddPlayer addPlayer = integerPacketAddPlayerEntry.getValue();
+                        addPlayer.setId(integerPacketAddPlayerEntry.getKey());
+                        server.sendToAllTCP(addPlayer);
                     }
 
                     System.out.println(serverWorld.getConnectedIds());
@@ -96,10 +96,13 @@ public class ServerConnection {
                                 enemyAI.getX(), enemyAI.getY(), enemyAI.getAngle(), enemyAI.getHealth(), enemyAI.getId(), enemyAI.getFollowPlayer());
 
                         // Check if player not in list, enemy(AI) enough not follow it
-                        if (!serverWorld.getPlayers().containsValue(enemyAI.getFollowPlayer()))
+                        if (!serverWorld.containsPlayer(enemyAI.getFollowPlayer()))
                             ai.setFollowPlayer("");
                         server.sendToAllTCP(ai);
                     }
+                } else if (object instanceof PacketBullet) {
+                    PacketBullet packetBullet = (PacketBullet) object;
+                    server.sendToAllUDP(packetBullet);
                 }
             }
 

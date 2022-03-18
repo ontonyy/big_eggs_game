@@ -3,21 +3,22 @@ package com.bigeggs.server.world;
 import Packets.PacketAddEnemyAI;
 import Packets.PacketAddPlayer;
 import Packets.PacketCreator;
+import models.Bullet;
 import models.EnemyAI;
 
 import java.util.*;
 
 public class ServerWorld {
-    private HashMap<Integer, String> players = new LinkedHashMap<>();
+    private Map<Integer, PacketAddPlayer> players = new LinkedHashMap<>();
     private List<PacketAddEnemyAI> enemies = new LinkedList<>();
     private int id = 5;
 
     public void fillEnemiesList() {
         enemies.add(PacketCreator.createPacketEnemyAI(300f, 0f, 0f, 100, 0, ""));
-        enemies.add(PacketCreator.createPacketEnemyAI(100f, 900f, 0f, 100, 1, ""));
-        enemies.add(PacketCreator.createPacketEnemyAI(900f, 900f, 0f, 100, 2, ""));
-        enemies.add(PacketCreator.createPacketEnemyAI(900f, 100f, 0f, 100, 3, ""));
-        enemies.add(PacketCreator.createPacketEnemyAI(100f, 100f, 0f, 100, 4, ""));
+        enemies.add(PacketCreator.createPacketEnemyAI(250f, 300f, 0f, 100, 4, ""));
+        enemies.add(PacketCreator.createPacketEnemyAI(300f, 1275f, 0f, 100, 1, ""));
+        enemies.add(PacketCreator.createPacketEnemyAI(1250, 1250f, 0f, 100, 2, ""));
+        enemies.add(PacketCreator.createPacketEnemyAI(1300f, 300f, 0f, 100, 3, ""));
     }
 
     public int removeEnemy() {
@@ -40,8 +41,8 @@ public class ServerWorld {
         return enemies;
     }
 
-    public void addPlayer(int id, String name) {
-        players.put(id, name);
+    public void addPlayer(Integer id, PacketAddPlayer addPlayer) {
+        players.put(id, addPlayer);
     }
 
     public void removeId(int id) {
@@ -52,7 +53,14 @@ public class ServerWorld {
         return players.keySet();
     }
 
-    public HashMap<Integer, String> getPlayers() {
+    public Map<Integer, PacketAddPlayer> getPlayers() {
         return players;
+    }
+
+    public boolean containsPlayer(String playerName) {
+        for (PacketAddPlayer player : players.values()) {
+            if (player.getPlayerName().equals(playerName)) return true;
+        }
+        return false;
     }
 }

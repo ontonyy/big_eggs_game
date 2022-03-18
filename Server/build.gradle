@@ -43,8 +43,8 @@ project(":core") {
 
 
     dependencies {
-        compile "com.esotericsoftware:kryo:3.0.1"
-        compile ("com.esotericsoftware:kryonet:2.22.0-RC1") {
+        implementation "com.esotericsoftware:kryo:3.0.1"
+        implementation ("com.esotericsoftware:kryonet:2.22.0-RC1") {
             exclude module : 'kryo'
         }
         api "com.badlogicgames.gdx:gdx:$gdxVersion"
@@ -55,6 +55,5 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx-ai:$aiVersion"
         api "com.badlogicgames.ashley:ashley:$ashleyVersion"
         api "com.badlogicgames.gdx-controllers:gdx-controllers-core:$gdxControllersVersion"
-        
     }
 }

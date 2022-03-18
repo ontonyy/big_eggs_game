@@ -1,5 +1,10 @@
 package Packets;
 
+import java.util.Random;
+
+import com.badlogic.gdx.math.Vector2;
+import com.bigeggs.client.models.Player;
+
 public class PacketCreator {
 
     public static PacketAddPlayer createPacketAddPlayer(String name) {
@@ -17,6 +22,15 @@ public class PacketCreator {
         packetPlayerInfo.setHealth(health);
         packetPlayerInfo.setId(id);
         return packetPlayerInfo;
+    }
+
+    public static PacketBullet createPacketBullet(float posX, float posY, float dirX, float dirY) {
+        PacketBullet packetBullet = new PacketBullet();
+        packetBullet.setDirectionX(dirX);
+        packetBullet.setDirectionY(dirY);
+        packetBullet.setPositionX(posX);
+        packetBullet.setPositionY(posY);
+        return packetBullet;
     }
 
     public static PacketRemovePlayer createPacketRemovePlayer(int id) {

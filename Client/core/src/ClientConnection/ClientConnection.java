@@ -2,7 +2,9 @@ package ClientConnection;
 
 import Packets.*;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.math.Vector2;
 import com.bigeggs.client.gameInfo.GameClient;
+import com.bigeggs.client.models.Bullet;
 import com.bigeggs.client.models.EnemyAI;
 import com.bigeggs.client.models.GameCharacter;
 import com.bigeggs.client.models.Player;
@@ -14,6 +16,7 @@ import com.bigeggs.client.world.ClientWorld;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.Random;
 
 public class ClientConnection {
     private Client client;
@@ -21,14 +24,18 @@ public class ClientConnection {
     private GameScreen gameScreen;
     private GameClient gameClient;
     private ClientWorld clientWorld;
+    private int skinId;
 
     public ClientConnection() {
         String ip = "localhost";
 
-        int udpPort = 54777, tcpPort = 54555;
+        int udpPort = 8090, tcpPort = 8080;
 
         client = new Client();
         client.start();
+
+        // set skin ID
+        setSkinId();
 
         // Register all packets that are sent over the network.
         client.getKryo().register(PacketAddPlayer.class);
@@ -40,6 +47,7 @@ public class ClientConnection {
         client.getKryo().register(PacketUpdatePlayerInfo.class);
         client.getKryo().register(Player.class);
         client.getKryo().register(GameCharacter.class);
+        client.getKryo().register(PacketBullet.class);
 
         client.addListener(new Listener() {
             @Override
@@ -52,8 +60,8 @@ public class ClientConnection {
                             PacketAddPlayer addPlayer = (PacketAddPlayer) object;
 
                             // Check if client world not contains and packet if not equal current id
-                            if (addPlayer.getId() != connection.getID() || clientWorld.getPlayers().containsKey(addPlayer.getId())) {
-                                final Player player = Player.createPlayer(200f, 300f, 0f, addPlayer.getPlayerName());
+                            if (addPlayer.getId() != connection.getID() && !clientWorld.getPlayers().containsKey(addPlayer.getId())) {
+                                final Player player = Player.createPlayer(200f, 300f, 0f, addPlayer.getPlayerName(), "playerIcons/" + addPlayer.getSkinId() + ".png");
                                 clientWorld.addPlayer(addPlayer.getId(), player);
                             }
                             System.out.println(addPlayer.getPlayerName() + " connected!");
@@ -106,6 +114,11 @@ public class ClientConnection {
                     if (clientWorld.getEnemyAIListIds().contains(ai.getId())) {
                         clientWorld.removeEnemy(ai.getId());
                     }
+                } else if (object instanceof PacketBullet) {
+                    PacketBullet packetBullet = (PacketBullet) object;
+                    Bullet bullet = new Bullet(new Vector2(packetBullet.getPositionX(), packetBullet.getPositionY()),
+                            new Vector2(packetBullet.getDirectionX(), packetBullet.getDirectionY()));
+                    clientWorld.addBullet(bullet);
                 }
             }
         });
@@ -128,9 +141,23 @@ public class ClientConnection {
         client.sendTCP(addEnemyAI);
     }
 
+    public void addBullet(float posX, float posY, float dirX, float dirY) {
+        PacketBullet packetBullet = PacketCreator.createPacketBullet(posX, posY, dirX, dirY);
+        client.sendUDP(packetBullet);
+    }
+
     public void sendPacketConnect() {
         PacketAddPlayer packetConnect = PacketCreator.createPacketAddPlayer(playerName);
+        packetConnect.setSkinId(getSkinId());
         client.sendTCP(packetConnect);
+    }
+
+    public int getSkinId() {
+        return skinId;
+    }
+
+    public void setSkinId() {
+        this.skinId = new Random().nextInt(5);
     }
 
     public GameScreen getGameScreen() {

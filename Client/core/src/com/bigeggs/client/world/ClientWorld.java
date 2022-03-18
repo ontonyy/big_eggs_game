@@ -1,6 +1,7 @@
 package com.bigeggs.client.world;
 
 import ClientConnection.ClientConnection;
+import com.bigeggs.client.models.Bullet;
 import com.bigeggs.client.models.EnemyAI;
 import com.bigeggs.client.models.Player;
 
@@ -10,9 +11,18 @@ public class ClientWorld {
     private ClientConnection clientConnection;
     private HashMap<Integer, Player> players = new HashMap<>();
     private HashMap<Integer, EnemyAI> enemyAIList = new LinkedHashMap<>();
+    private List<Bullet> bullets = new ArrayList<>();
 
     public HashMap<Integer, Player> getPlayers() {
         return players;
+    }
+
+    public List<Bullet> getBullets() {
+        return bullets;
+    }
+
+    public void addBullet(Bullet bullet) {
+        bullets.add(bullet);
     }
 
     public void addPlayer(int id, Player player) {

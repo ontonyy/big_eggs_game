@@ -1,5 +1,6 @@
 package Packets;
 
+
 public class PacketCreator {
 
     public static PacketAddPlayer createPacketAddPlayer(String name) {
@@ -23,6 +24,15 @@ public class PacketCreator {
         PacketRemovePlayer removePlayer = new PacketRemovePlayer();
         removePlayer.setId(id);
         return removePlayer;
+    }
+
+    public static PacketBullet createPacketBullet(float posX, float posY, float dirX, float dirY) {
+        PacketBullet packetBullet = new PacketBullet();
+        packetBullet.setPositionX(posX);
+        packetBullet.setPositionY(posY);
+        packetBullet.setDirectionX(dirX);
+        packetBullet.setDirectionY(dirY);
+        return packetBullet;
     }
 
     public static PacketAddEnemyAI createPacketEnemyAI(float x, float y, float angle, int health, int id, String follow) {

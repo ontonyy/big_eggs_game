@@ -2,7 +2,15 @@ package Packets;
 
 public class PacketAddPlayer {
     private String playerName;
-    private int id;
+    private int id, skinId;
+
+    public int getSkinId() {
+        return skinId;
+    }
+
+    public void setSkinId(int randomSkin) {
+        this.skinId = randomSkin;
+    }
 
     public int getId() {
         return id;

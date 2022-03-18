@@ -12,9 +12,11 @@ public class EnemyAI extends GameCharacter {
     private int id;
     private Circle shape;
     private String followPlayer = "";
+    private Float previuosX;
+    private Float previuosY;
 
     public EnemyAI(float x, float y, float angle, MapLayer collisonLayer) {
-        super(x, y, 64, angle, "", collisonLayer, "player1.png");
+        super(x, y, 64, angle, "", collisonLayer, "botModel.png");
         map = collisonLayer;
         shape = new Circle();
         shape.setPosition(x, y);
@@ -27,9 +29,17 @@ public class EnemyAI extends GameCharacter {
 
         double speed;
         abstractBox = new Rectangle(position.x, position.y, 32, 32);
-        if (isCollision()){ //collision handling (works bad)
-            speed = 0.2;
-        } else speed = 1;
+        if (isCollision()){
+            speed = 0;
+            if (previuosY != null && previuosX != null) {
+                position.x = previuosX;
+                position.y = previuosY;
+            }
+        } else {
+            speed = 1;
+            previuosX = position.x;
+            previuosY = position.y;
+        }
 
         if (followPlayer.equals("") || followPlayer.equals(character.name)) {
             if (shape.contains(pos.x, pos.y)) {
