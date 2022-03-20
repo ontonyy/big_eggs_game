@@ -13,7 +13,7 @@ public class HealthBoost extends Boost {
     public boolean collisionWithPlayer(Player player) {
         if (abstractBox.overlaps(player.abstractBox)) {
             player.health += 30;
-            player.healthDrawStart = TimeUtils.millis();
+            player.healthStart = TimeUtils.millis();
             return true;
         } else return false;
     }

@@ -250,6 +250,10 @@ public class GameCharacter {
         this.weapon = w;
     }
 
+    public Weapon getWeapon() {
+        return weapon;
+    }
+
     public Vector2 getPosition() {
         return position;
     }

@@ -32,4 +32,8 @@ public class Boost {
     public void dispose() {
         picture.dispose();
     }
+
+    public Vector2 getPosition() {
+        return position;
+    }
 }

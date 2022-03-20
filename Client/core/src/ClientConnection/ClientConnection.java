@@ -48,6 +48,8 @@ public class ClientConnection {
         client.getKryo().register(Player.class);
         client.getKryo().register(GameCharacter.class);
         client.getKryo().register(PacketBullet.class);
+        client.getKryo().register(PacketBoost.class);
+        client.getKryo().register(PacketRemoveBoost.class);
 
         client.addListener(new Listener() {
             @Override
@@ -119,6 +121,19 @@ public class ClientConnection {
                     Bullet bullet = new Bullet(new Vector2(packetBullet.getPositionX(), packetBullet.getPositionY()),
                             new Vector2(packetBullet.getDirectionX(), packetBullet.getDirectionY()));
                     clientWorld.addBullet(bullet);
+                } else if (object instanceof PacketBoost) {
+                    Gdx.app.postRunnable(new Runnable() {
+                        @Override
+                        public void run() {
+                            PacketBoost boost = (PacketBoost) object;
+                            if (!clientWorld.containsBoost(boost)) {
+                                clientWorld.addBoost(boost);
+                            }
+                        }
+                    });
+                } else if (object instanceof PacketRemoveBoost) {
+                    PacketRemoveBoost removeBoost = (PacketRemoveBoost) object;
+                    clientWorld.removeBoost(removeBoost.getX(), removeBoost.getY());
                 }
             }
         });
@@ -129,6 +144,13 @@ public class ClientConnection {
         } catch (IOException exception) {
             JOptionPane.showMessageDialog(null, "Can not connect to the Server.");
         }
+    }
+
+    public void sendPacketRemoveBoost(float x, float y) {
+        PacketRemoveBoost removeBoost = new PacketRemoveBoost();
+        removeBoost.setX(x);
+        removeBoost.setY(y);
+        client.sendTCP(removeBoost);
     }
 
     public void updatePlayer(float x, float y, float angle, String direction, int health) {

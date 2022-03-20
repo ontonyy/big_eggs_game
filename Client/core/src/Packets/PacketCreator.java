@@ -60,4 +60,18 @@ public class PacketCreator {
         packetAddEnemyAI.setFollowPlayer(follow);
         return packetAddEnemyAI;
     }
+
+    public static PacketBoost createPacketBoost(float x, float y, String type) {
+        PacketBoost boost = new PacketBoost();
+        boost.setX(x);
+        boost.setY(y);
+        boost.setType(type);
+        return boost;
+    }
+    public static PacketRemoveBoost createPacketRemoveBoost(float x, float y) {
+        PacketRemoveBoost removeBoost = new PacketRemoveBoost();
+        removeBoost.setX(x);
+        removeBoost.setY(y);
+        return removeBoost;
+    }
 }

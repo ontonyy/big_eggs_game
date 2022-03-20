@@ -2,6 +2,7 @@ package com.bigeggs.server.world;
 
 import Packets.PacketAddEnemyAI;
 import Packets.PacketAddPlayer;
+import Packets.PacketBoost;
 import Packets.PacketCreator;
 import models.Bullet;
 import models.EnemyAI;
@@ -11,6 +12,8 @@ import java.util.*;
 public class ServerWorld {
     private Map<Integer, PacketAddPlayer> players = new LinkedHashMap<>();
     private List<PacketAddEnemyAI> enemies = new LinkedList<>();
+    private List<PacketBoost> boosts = new LinkedList<>();
+    private List<String> boostsTypes = Arrays.asList("speed", "hp", "ammo");
     private int id = 5;
 
     public void fillEnemiesList() {
@@ -19,6 +22,31 @@ public class ServerWorld {
         enemies.add(PacketCreator.createPacketEnemyAI(300f, 1275f, 0f, 100, 1, ""));
         enemies.add(PacketCreator.createPacketEnemyAI(1250, 1250f, 0f, 100, 2, ""));
         enemies.add(PacketCreator.createPacketEnemyAI(1300f, 300f, 0f, 100, 3, ""));
+    }
+
+    public void fillBoostsList() {
+        addBoost(500f, 600f);
+        addBoost(600f, 600f);
+        addBoost(700f, 600f);
+    }
+
+    public String getRandomItemList(List<String> itemList) {
+        Random random = new Random();
+        return itemList.get(random.nextInt(itemList.size()));
+    }
+
+    public void addBoost(float x, float y) {
+        boosts.add(PacketCreator.createPacketBoost(x, y, getRandomItemList(boostsTypes)));
+    }
+
+    public void removeBoost(float x, float y) {
+        PacketBoost rBoost = null;
+        for (PacketBoost boost : boosts) {
+            if (boost.getX() == x && boost.getY() == y) {
+                rBoost = boost;
+            }
+        }
+        boosts.remove(rBoost);
     }
 
     public int removeEnemy() {
@@ -62,5 +90,9 @@ public class ServerWorld {
             if (player.getPlayerName().equals(playerName)) return true;
         }
         return false;
+    }
+
+    public List<PacketBoost> getBoosts() {
+        return boosts;
     }
 }

@@ -5,7 +5,6 @@ import com.bigeggs.server.world.ServerWorld;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
-import models.Bullet;
 import models.GameCharacter;
 import models.Player;
 
@@ -33,6 +32,9 @@ public class ServerConnection {
         // Create 5 enemies(Bots AI) on server
         serverWorld.fillEnemiesList();
 
+        // Create boosts on server
+        serverWorld.fillBoostsList();
+
         // Register all packets that the same with ClientConnection that are sent over the network.
         server.getKryo().register(PacketAddPlayer.class);
         server.getKryo().register(PacketRemovePlayer.class);
@@ -44,6 +46,8 @@ public class ServerConnection {
         server.getKryo().register(Player.class);
         server.getKryo().register(GameCharacter.class);
         server.getKryo().register(PacketBullet.class);
+        server.getKryo().register(PacketBoost.class);
+        server.getKryo().register(PacketRemoveBoost.class);
 
         server.addListener(new Listener() {
             @Override
@@ -62,6 +66,11 @@ public class ServerConnection {
                         server.sendToAllTCP(enemy);
                     }
                     server.sendToAllTCP(removeAI);
+
+                    // Send to clients boosts
+                    for (PacketBoost boost : serverWorld.getBoosts()) {
+                        server.sendToAllTCP(boost);
+                    }
 
                     // Add player on server and send to all client packet add player
                     serverWorld.addPlayer(connection.getID(), connect);
@@ -103,6 +112,10 @@ public class ServerConnection {
                 } else if (object instanceof PacketBullet) {
                     PacketBullet packetBullet = (PacketBullet) object;
                     server.sendToAllUDP(packetBullet);
+                } else if (object instanceof  PacketRemoveBoost) {
+                    PacketRemoveBoost removeBoost = (PacketRemoveBoost) object;
+                    server.sendToAllTCP(removeBoost);
+                    serverWorld.removeBoost(removeBoost.getX(), removeBoost.getY());
                 }
             }
 

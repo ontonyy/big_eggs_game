@@ -14,9 +14,11 @@ public class Player extends GameCharacter {
     public final BitmapFont uiFont;
     private static MapLayer map;
     public long speedStart = 0;
-    public long healthDrawStart = 0;
+    public long healthStart = 0;
+    public long ammoStart = 0;
     public boolean speedBoost = false;
     public boolean hpBoost = false;
+    public boolean ammoBoost = false;
 
     public Player(float x, float y, float angle, String name, MapLayer tiledMapTileLayer, String texture) {
         super(x, y, 64, angle, name, tiledMapTileLayer, texture);
@@ -51,7 +53,7 @@ public class Player extends GameCharacter {
         return new Player(x, y, angle, name, (MapLayer) map, texture) ;
     }
 
-    public void checkSpeedTime(Batch batch) {
+    public void actWithSpeedBoost(Batch batch) {
         if (speedStart != 0) {
             long timeEnd = TimeUtils.millis() - speedStart;
             if (timeEnd < 5000) {
@@ -64,20 +66,32 @@ public class Player extends GameCharacter {
     }
 
     public void actWithHealthBoost(Batch batch) {
-        if (healthDrawStart != 0) {
-            long timeEnd = TimeUtils.millis() - healthDrawStart;
+        if (healthStart != 0) {
+            long timeEnd = TimeUtils.millis() - healthStart;
             if (timeEnd < 1000) {
                 uiFont.draw(batch, "Player health: " + health, position.x - 500, position.y + 370);
             }
         }
     }
 
+    public void actWithAmmoBoost(Batch batch) {
+        if (ammoStart != 0) {
+            long timeEnd = TimeUtils.millis() - ammoStart;
+            if (timeEnd < 1000) {
+                uiFont.draw(batch, "Player ammo: " + getWeapon().getAmmo(), position.x - 270, position.y + 370);
+            }
+        }
+    }
+
     public void actWithBoosts(Batch batch) {
         if (speedBoost) {
-            checkSpeedTime(batch);
+            actWithSpeedBoost(batch);
         }
         if (hpBoost) {
             actWithHealthBoost(batch);
+        }
+        if (ammoBoost) {
+            actWithAmmoBoost(batch);
         }
     }
 

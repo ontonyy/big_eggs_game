@@ -29,4 +29,12 @@ public class Weapon {
             ammo = 0;
         }
     }
+
+    public int getAmmo() {
+        return ammo;
+    }
+
+    public void addAmmo(int ammo) {
+        this.ammo += ammo;
+    }
 }

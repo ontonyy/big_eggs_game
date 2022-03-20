@@ -19,15 +19,13 @@ import com.bigeggs.client.models.Bullet;
 import com.bigeggs.client.models.EnemyAI;
 import com.bigeggs.client.models.Player;
 import com.bigeggs.client.models.Weapon;
+import com.bigeggs.client.models.boosts.AmmoBoost;
 import com.bigeggs.client.models.boosts.Boost;
 import com.bigeggs.client.models.boosts.HealthBoost;
 import com.bigeggs.client.models.boosts.SpeedBoost;
 import com.bigeggs.client.world.ClientWorld;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class GameScreen implements Screen, InputProcessor {
     private Player player;
@@ -58,9 +56,7 @@ public class GameScreen implements Screen, InputProcessor {
         enemy = new EnemyAI(200f, 1500f, 0f, (MapLayer) map.getLayers().get("Objects"));
 
         camera = new OrthographicCamera(1000, 800);
-        boosts = new LinkedList<>();
-        boosts.add(new SpeedBoost(700f, 800f));
-        boosts.add(new HealthBoost(500f, 700f));
+        boosts = world.getBoosts();
 
         shapeRenderer = new ShapeRenderer();
     }
@@ -121,16 +117,21 @@ public class GameScreen implements Screen, InputProcessor {
     }
 
     public void boostsCollisionWithPlayers() {
+        List<Boost> boostsRemove = new ArrayList<>();
         for (Boost boost : boosts) {
             if (boost.collisionWithPlayer(player)) {
-                boosts.remove(boost);
+                boostsRemove.add(boost);
                 if (boost instanceof SpeedBoost) {
                     player.speedBoost = true;
                 } else if (boost instanceof HealthBoost) {
                     player.hpBoost = true;
+                } else if (boost instanceof AmmoBoost) {
+                    player.ammoBoost = true;
                 }
+                clientConnection.sendPacketRemoveBoost(boost.getPosition().x, boost.getPosition().y);
             }
         }
+        boosts.removeAll(boostsRemove);
     }
 
     public void shoot(Vector2 mousePos) {
