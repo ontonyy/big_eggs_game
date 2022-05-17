@@ -77,7 +77,7 @@ public class ServerConnection {
                     if (object instanceof PacketAddPlayer) {
                         // Get packet if someone connects
                         PacketAddPlayer connect = (PacketAddPlayer) object;
-                        writeLog("Connected player: " + connect.getPlayerName());
+                        sendPacketPlayerPosition(connection.getID());
                         System.out.println("Connected player: " + connect.getPlayerName());
 
                         // Add player on server and send to all client packet add player
@@ -137,7 +137,7 @@ public class ServerConnection {
                     } else if (object instanceof PacketRemovePlayer) {
                         PacketRemovePlayer removedPlayer = (PacketRemovePlayer) object;
                         if (serverWorld.getPlayers().size() < 6 && serverWorld.getConnectedIds().contains(removedPlayer.getId())) {
-                            writeLog("Disconnected player: " + removedPlayer.getName());
+                            System.out.println("Disconnected player: " + removedPlayer.getName());
                             serverWorld.removeId(removedPlayer.getId());
                             serverWorld.getScores().remove(removedPlayer.getName());
                             server.sendToAllTCP(serverWorld.addEnemyAI(removedPlayer.getX(), removedPlayer.getY()));
@@ -178,12 +178,14 @@ public class ServerConnection {
             boolean start = serverWorld.getGameStartTime() == 0;
             // Game continue 2 minutes
             if (serverWorld.checkGameEnd()) {
-                writeLog("Scores: " + serverWorld.getScores());
-                writeLog("Players amount: " + serverWorld.getPlayers().size());
+                System.out.println("Scores: " + serverWorld.getScores());
+                System.out.println("Players amount: " + serverWorld.getPlayers().size());
                 serverWorld.setStartGame(false);
                 serverWorld.setGameSeconds(0);
                 sendPacketWin(serverWorld.getWinner());
                 serverWorld.clearScores();
+                serverWorld.resetYPosition();
+                serverWorld.fillPositions();
             } else {
                 long seconds = serverWorld.getGameSeconds();
                 sendPacketGameStart(start, String.format("TIME: %s.%s", seconds / 60, seconds % 60), serverWorld.getScoreMessage());
@@ -240,13 +242,11 @@ public class ServerConnection {
      * Send random positions for players(clients) in server
      */
     public void sendPositions(PacketGameStartInfo startInfo) {
-        int index = 0;
         for (Integer connectedId : serverWorld.getConnectedIds()) {
-            List<Float> position = serverWorld.getRandomPos();
+            List<Float> position = serverWorld.getRandomStartPos();
             startInfo.setX(position.get(0));
             startInfo.setY(position.get(1));
             server.sendToTCP(connectedId, startInfo);
-            index++;
         }
     }
 
@@ -294,12 +294,19 @@ public class ServerConnection {
         server.sendToTCP(id, playerInfo);
     }
 
-    public void writeLog(String log) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(serverWorld.getCurrentDirectory(), true))) {
-            writer.write(log + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } ;
+    public void sendPacketPlayerPosition(int id) {
+        PacketPlayerPosition position = new PacketPlayerPosition();
+        position.setX(740f);
+        position.setY(serverWorld.getYPosition());
+        server.sendToTCP(id, position);
+    }
+
+    public ServerWorld getServerWorld() {
+        return serverWorld;
+    }
+
+    public Server getServer() {
+        return server;
     }
 
     public static void main(String[] args) {

@@ -1,6 +1,7 @@
 package ClientConnection;
 
 import Packets.PacketCreator;
+import Packets.add.PacketAddBoost;
 import Packets.add.PacketAddEnemyAI;
 import Packets.add.PacketAddPlayer;
 import com.bigeggs.client.gameInfo.GameClient;
@@ -11,6 +12,8 @@ import com.esotericsoftware.kryonet.Client;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.LinkedList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,6 +35,9 @@ class ClientConnectionTest {
         server.server.close();
     }
 
+    /**
+     * Test bullet adding and removing in server, and server send this info to every client
+     */
     @Test
     void testBulletsCommunication() throws InterruptedException {
         connection.setPlayerName("Maxim");
@@ -52,6 +58,9 @@ class ClientConnectionTest {
         assertEquals(2, connection.getClientWorld().getBullets().size());
     }
 
+    /**
+     * Remove part of boosts in server, and check it.
+     */
     @Test
     void sendPacketRemoveBoost() throws InterruptedException {
         assertEquals(26, server.getServerWorld().getBoosts().size());
@@ -62,6 +71,10 @@ class ClientConnectionTest {
         assertEquals(23, server.getServerWorld().getBoosts().size());
     }
 
+    /**
+     * Add enemy on server from client, and after that remove player in client and send this info to server.
+     * Server remove enemies in all clients.
+     */
     @Test
     void sendPacketRemoveAI() throws InterruptedException {
         connection.setPlayerName("Vasja");
@@ -80,6 +93,11 @@ class ClientConnectionTest {
         assertEquals(0, connection.getClientWorld().getEnemyAIList().size());
     }
 
+    /**
+     * Add more one connection, and send from it player packet to server,
+     * after that update this player info and check this
+     * updating in first client and server.
+     */
     @Test
     void updatePlayer() throws InterruptedException {
         ClientConnection connection2 = new ClientConnection();
@@ -112,6 +130,11 @@ class ClientConnectionTest {
         connection.showDialogMessage("Maxina is here");
     }
 
+    /**
+     * Firstly fill enemies in server, by client add on enemy, and check it in server side.
+     * After adding update enemy info, and check changes.
+     * @throws InterruptedException
+     */
     @Test
     void updateEnemy() throws InterruptedException {
         connection.setPlayerName("Vasja");
@@ -135,6 +158,9 @@ class ClientConnectionTest {
         assertEquals("Vasja", clientEnemyAI2.getFollowPlayer());
     }
 
+    /**
+     * First packet that send every connected client.
+     */
     @Test
     void sendPacketConnect() throws InterruptedException {
         connection.setPlayerName("Vasja");
@@ -146,6 +172,9 @@ class ClientConnectionTest {
         assertEquals(1, server.getServerWorld().getPlayers().size());
     }
 
+    /**
+     * Remove player from server by ID in client side, server disconnect this player.
+     */
     @Test
     void sendPacketRemovePlayer() throws InterruptedException {
         connection.setPlayerName("Antonio");
@@ -161,6 +190,10 @@ class ClientConnectionTest {
         assertEquals(0, connection.getClientWorld().getPlayers().size());
     }
 
+    /**
+     * Firstly fill score map in server according to players, after that
+     * Send first score packet, and player score will increase.
+     */
     @Test
     void sendPacketAddScore() throws InterruptedException {
         connection.setPlayerName("Kirill");
@@ -241,11 +274,24 @@ class ClientConnectionTest {
         assertNotNull(connection.getClientWorld());
     }
 
+    /**
+     * Check send position packet
+     */
     @Test
     void testSendPacketPlayerPosition() throws InterruptedException {
         connection.setPlayerName("Kilka");
         connection.sendPacketConnect();
         Thread.sleep(1000);
         connection.sendPacketPlayerPosition(true);
+    }
+
+    /**
+     * Check server send list packets, client cannot them handle (Gdx.app is null).
+     */
+    @Test
+    void testSendPacketLists() throws InterruptedException {
+        server.sendPacketListBoosts(new LinkedList<PacketAddBoost>(), true);
+        server.sendPacketListEnemies();
+        Thread.sleep(1000);
     }
 }

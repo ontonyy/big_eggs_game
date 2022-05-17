@@ -13,15 +13,16 @@ import java.util.*;
  * Class that hold all variables from clients in server (players, enemies, boosts, messages)
  */
 public class ServerWorld {
-    private final String currentDirectory = Paths.get("").toAbsolutePath() + "/server_log.txt";
     private Map<Integer, PacketAddPlayer> players = new LinkedHashMap<>();
     private Map<Integer, PacketAddEnemyAI> enemies = new LinkedHashMap<>();
     private Map<Integer, PacketAddBoost> boosts = new LinkedHashMap<>();
     private Map<String, Integer> scores = new LinkedHashMap<>();
     public List<String> boostsTypes = Arrays.asList("speed", "hp", "ammo", "invis");
-    private List<List<Float>> positions = new ArrayList<>();
+    private List<List<Float>> positions = new LinkedList<>();
+    private List<List<Float>> startPositions = new LinkedList<>();
     private int aiId = 0;
     private int boostID = 0;
+    private float startPosition = 1000f;
 
     // Time variables of waiting, ready and game
     private long gameStartTime, readyTime, waitingTime = 0;
@@ -37,16 +38,24 @@ public class ServerWorld {
      * Fill positions for players and enemies that will be taken randomly from that list
      */
     public void fillPositions() {
-        positions.add(Arrays.asList(85f, 775f));
-        positions.add(Arrays.asList(615f, 1530f));
-        positions.add(Arrays.asList(1475f, 1055f));
-        positions.add(Arrays.asList(305f, 80f));
-        positions.add(Arrays.asList(1400f, 135f));
+        positions.clear();
+        startPositions.clear();
+        startPositions.add(Arrays.asList(85f, 775f)); startPositions.add(Arrays.asList(615f, 1530f));
+        startPositions.add(Arrays.asList(1475f, 1055f)); startPositions.add(Arrays.asList(305f, 80f));
+        startPositions.add(Arrays.asList(1400f, 135f));
+
         positions.add(Arrays.asList(1520f, 710f));
-        positions.add(Arrays.asList(970f, 70f));
-        positions.add(Arrays.asList(740f, 730f));
-        positions.add(Arrays.asList(60f, 475f));
-        positions.add(Arrays.asList(300f, 1430f));
+        positions.add(Arrays.asList(970f, 70f)); positions.add(Arrays.asList(740f, 730f));
+        positions.add(Arrays.asList(60f, 475f)); positions.add(Arrays.asList(350f, 1360f));
+
+        positions.add(Arrays.asList(550f, 550f)); positions.add(Arrays.asList(550f, 920f));
+        positions.add(Arrays.asList(920f, 920f)); positions.add(Arrays.asList(920f, 550f));
+        positions.add(Arrays.asList(1250f, 1230f)); positions.add(Arrays.asList(160f, 1150f));
+        positions.add(Arrays.asList(980f, 330f)); positions.add(Arrays.asList(920f, 1150f));
+        positions.add(Arrays.asList(450f, 330f)); positions.add(Arrays.asList(1075f, 670f));
+
+        positions.add(Arrays.asList(1525f, 250f)); positions.add(Arrays.asList(1095f, 1525f));
+        positions.add(Arrays.asList(1450f, 1485f)); positions.add(Arrays.asList(165f, 1500f));
     }
 
     /**
@@ -55,10 +64,6 @@ public class ServerWorld {
     public void fillEnemiesList() {
         enemies.clear();
         if (players.size() < 5 && players.size() > 1) {
-            List<List<Float>> positions = Arrays.asList(Arrays.asList(725f, 155f), Arrays.asList(300f, 1275f),
-                    Arrays.asList(1250f, 1250f), Arrays.asList(1300f, 300f), Arrays.asList(250f, 300f),
-                    Arrays.asList(1090f, 460f), Arrays.asList(1515f, 850f), Arrays.asList(720f, 1360f),
-                    Arrays.asList(370f, 950f));
             int index = aiId + 1;
             for (int i = 0; i < 5 - players.size(); i++) {
                 int ind = index + i;
@@ -123,6 +128,18 @@ public class ServerWorld {
             fillPositions();
         }
         return positions.remove(random.nextInt(positions.size()));
+    }
+
+    public List<Float> getRandomStartPos() {
+        Random random = new Random();
+        if (startPositions.size() < 1) {
+            fillPositions();
+        }
+        return startPositions.remove(random.nextInt(startPositions.size()));
+    }
+
+    public List<List<Float>> getPositions() {
+        return positions;
     }
 
     public void addBoost(float x, float y) {
@@ -430,7 +447,15 @@ public class ServerWorld {
         return coeff;
     }
 
-    public String getCurrentDirectory() {
-        return currentDirectory;
+    public float getYPosition() {
+        if (startPosition < 625 || startPosition > 1150) {
+            startPosition = 1000;
+        }
+        startPosition -= 75f;
+        return startPosition;
+    }
+
+    public void resetYPosition() {
+        startPosition = 1000f;
     }
 }

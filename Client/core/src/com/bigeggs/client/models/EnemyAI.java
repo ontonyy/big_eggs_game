@@ -14,6 +14,7 @@ public class EnemyAI extends GameCharacter {
     public String followPlayer = "";
     private Float previuosX;
     private Float previuosY;
+    private long time = 0;
 
     /**
      *
@@ -28,6 +29,7 @@ public class EnemyAI extends GameCharacter {
         shape = new Circle();
         shape.setPosition(x, y);
         shape.setRadius(400f);
+        this.weapon = new EnemyAIWeapon();
     }
     /**
      * Constructor for tests.
@@ -49,13 +51,16 @@ public class EnemyAI extends GameCharacter {
 
         double speed;
         abstractBox = new Rectangle(position.x, position.y, 32, 32);
+        // abstract box - area that interacts with other objects
         if (isCollisionWithWall()){
             speed = 0;
             if (previuosY != null && previuosX != null) {
+                // made for avoiding a nullPointerException
                 position.x = previuosX;
                 position.y = previuosY;
             }
         } else {
+            // if collides with wall, send to previous position aka do not allow go through wall
             speed = 1;
             previuosX = position.x;
             previuosY = position.y;
@@ -79,7 +84,6 @@ public class EnemyAI extends GameCharacter {
 
     }
 
-
     /**
      * Simple enemy creation with constructor and setters
      * @return EnemyAI
@@ -93,6 +97,14 @@ public class EnemyAI extends GameCharacter {
 
     public boolean isCollisionWithBullet(Rectangle r) {
         return this.abstractBox.overlaps(r);
+    }
+
+    public Bullet shoot(Player player, String name, long time) {
+        if (!followPlayer.equals("") && System.currentTimeMillis() - time >= 400) {
+            Bullet bullet = new Bullet(getBarrelPosition(), new Vector2(player.getPosition().x - position.x, player.getPosition().y - position.y).nor(), name);
+            return bullet;
+        }
+        return null;
     }
 
     public int getId() {

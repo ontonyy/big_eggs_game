@@ -1,20 +1,19 @@
-package com.bigeggs.client.world;
+package ServerConnection;
 
-import ClientConnection.ClientConnection;
 import Packets.add.PacketAddBoost;
 import com.badlogic.gdx.utils.TimeUtils;
-import com.bigeggs.client.models.Bullet;
-import com.bigeggs.client.models.EnemyAI;
-import com.bigeggs.client.models.Player;
-import com.bigeggs.client.models.boosts.*;
+import models.Bullet;
+import models.EnemyAI;
+import models.Player;
+import models.boosts.*;
 
 import java.util.*;
 
 /**
  * Class that hold all variables from server (players, enemies, boosts, messages)
  */
-public class ClientWorld {
-    private ClientConnection clientConnection;
+public class TestClientWorld {
+    private TestClient clientConnection;
     private Map<Integer, Player> players = new LinkedHashMap<>();
     private Map<String, Integer> playersNames = new LinkedHashMap<>();
     private Map<Integer, EnemyAI> enemyAIList = new LinkedHashMap<>();
@@ -25,7 +24,7 @@ public class ClientWorld {
     private List<Integer> removeBoostIds = new ArrayList<>();
     private int skinId;
 
-    public ClientWorld() {
+    public TestClientWorld() {
         setSkinId();
     }
 
@@ -107,11 +106,11 @@ public class ClientWorld {
         return enemyAIList.keySet();
     }
 
-    public ClientConnection getClientConnection() {
+    public TestClient getClientConnection() {
         return clientConnection;
     }
 
-    public void setClientConnection(ClientConnection clientConnection) {
+    public void setClientConnection(TestClient clientConnection) {
         this.clientConnection = clientConnection;
     }
 

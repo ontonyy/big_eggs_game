@@ -1,4 +1,4 @@
-package ClientConnection;
+package ServerConnection;
 
 import Packets.*;
 import Packets.add.*;
@@ -12,15 +12,14 @@ import Packets.update.PacketGameStartInfo;
 import Packets.update.PacketPlayerPosition;
 import Packets.update.PacketUpdateEnemyAI;
 import Packets.update.PacketUpdatePlayerInfo;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
-import com.bigeggs.client.gameInfo.GameClient;
-import com.bigeggs.client.models.*;
-import com.bigeggs.client.screens.GameScreen;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
-import com.bigeggs.client.world.ClientWorld;
+import models.Bullet;
+import models.EnemyAI;
+import models.GameCharacter;
+import models.Player;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -28,30 +27,29 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 
-public class ClientConnection {
+public class TestClient {
     private Client client;
     private String playerName;
-    private GameScreen gameScreen;
-    private GameClient gameClient;
-    private ClientWorld clientWorld;
+    private TestClientWorld clientWorld;
+    public Player player;
 
     /**
      * Constructor with client-server connect listening
      */
-    public ClientConnection() {
+    public TestClient() {
         /*
-        * To start game, should go to Putty, write this IP, add Putty Private Key
-        * Start session, add repository from 'git clone https://github.com/ontonyy/big_eggs_game.git'
-        * And start file 'java -jar Server.core.main.jar', and server will work
-        * IP using, instead can use 'localhost' or '193.40.156.162'
+         * To start game, should go to Putty, write this IP, add Putty Private Key
+         * Start session, add repository from 'git clone https://github.com/ontonyy/big_eggs_game.git'
+         * And start file 'java -jar Server.core.main.jar', and server will work
+         * IP using, instead can use 'localhost' or '193.40.156.162'
          * */
-        String ip = "193.40.156.162";
+        String ip = "localhost";
+        player = new Player(0f, 0f, "Gerakl");
 
         int udpPort = 8080, tcpPort = 8090;
 
-        client = new Client();
+        client = new Client(49152, 49152);
         client.start();
 
         // Register all packets that are sent over the network.
@@ -80,36 +78,23 @@ public class ClientConnection {
             public void received(final Connection connection, final Object object) {
                 if (object instanceof PacketAddPlayer) {
                     // Get packet to add player and create thread(because of texture) to create player
-                    Gdx.app.postRunnable(new Runnable() {
-                        @Override
-                        public void run() {
-                            PacketAddPlayer addPlayer = (PacketAddPlayer) object;
-                            // Check if client world not contains and packet if not equal current id
-                            if (addPlayer.getId() != connection.getID() && !clientWorld.getPlayers().containsKey(addPlayer.getId())) {
-                                final Player player = Player.createPlayer(200f, 300f, 0f, addPlayer.getPlayerName(), "playerIcons/" + addPlayer.getSkinId() + ".png");
-                                clientWorld.addPlayer(addPlayer.getId(), player);
-                                clientWorld.addPlayersMessage(addPlayer.getPlayerName() + " connected!");
-                                System.out.println(addPlayer.getPlayerName() + " connected!");
-                            }
-
-                        }
-                    });
+                    PacketAddPlayer addPlayer = (PacketAddPlayer) object;
+                    // Check if client world not contains and packet if not equal current id
+                    if (addPlayer.getId() != connection.getID() && !clientWorld.getPlayers().containsKey(addPlayer.getId())) {
+                        Player player = new Player(200f, 300f, addPlayer.getPlayerName());
+                        clientWorld.addPlayer(addPlayer.getId(), player);
+                        clientWorld.addPlayersMessage(addPlayer.getPlayerName() + " connected!");
+                        System.out.println(addPlayer.getPlayerName() + " connected!");
+                    }
                 } else if (object instanceof PacketUpdatePlayerInfo) {
                     // Get packet to update player if client world contains it
                     final PacketUpdatePlayerInfo playerInfo = (PacketUpdatePlayerInfo) object;
                     if (playerInfo.getId() == connection.getID()) {
                         if (playerInfo.isDead()) {
                             client.close();
-                            Gdx.app.postRunnable(new Runnable() {
-                                @Override
-                                public void run() {
-                                    gameClient.dispose();
-                                    gameClient.startConnect();
-                                }
-                            });
-                            showDialogMessage("You lose\nScore: " + gameScreen.getPlayer().getScore());
+                            showDialogMessage("You lose\nScore: " + player.getScore());
                         } else if (playerInfo.isWin()) {
-                            showDialogMessage("You win!\nScore: " + gameScreen.getPlayer().getScore());
+                            showDialogMessage("You win!\nScore: " + player.getScore());
                         }
                     } else {
                         if (clientWorld.getPlayers().containsKey(playerInfo.getId())) {
@@ -118,7 +103,6 @@ public class ClientConnection {
                             newPlayer.setAngle(playerInfo.getAngle());
                             newPlayer.setDirection(playerInfo.getDirection());
                             newPlayer.setHealth(playerInfo.getHealth());
-                            newPlayer.setInvisible(playerInfo.isInvisible());
                         }
                     }
                 } else if (object instanceof PacketRemovePlayer) {
@@ -136,15 +120,9 @@ public class ClientConnection {
                 } else if (object instanceof PacketAddEnemyAI) {
                     // Get packet to add enemy(AI) and create thread to it
                     final PacketAddEnemyAI enemyAI = (PacketAddEnemyAI) object;
-                    Gdx.app.postRunnable(new Runnable() {
-                        @Override
-                        public void run() {
-                            final EnemyAI enemyBot = EnemyAI.createEnemyAI(enemyAI.getX(), enemyAI.getY(), enemyAI.getAngle(), enemyAI.getHealth(), enemyAI.getFollowPlayer());
-                            enemyBot.setId(enemyAI.getId());
-                            clientWorld.addEnemy(enemyAI.getId(), enemyBot);
-                        }
-                    });
-
+                    EnemyAI enemyBot = new EnemyAI(enemyAI.getX(), enemyAI.getY(), enemyAI.getAngle());
+                    enemyBot.setId(enemyAI.getId());
+                    clientWorld.addEnemy(enemyAI.getId(), enemyBot);
                 } else if (object instanceof PacketUpdateEnemyAI) {
                     // Get packet to update enemy(AI) info
                     PacketUpdateEnemyAI enemyAI = (PacketUpdateEnemyAI) object;
@@ -172,8 +150,7 @@ public class ClientConnection {
 
                 } else if (object instanceof PacketRemoveBullet) {
                     PacketRemoveBullet packetRemoveBullet = (PacketRemoveBullet) object;
-                    List<Bullet> copy = new ArrayList<>(clientWorld.getBullets());
-                    for (Bullet b : copy) {
+                    for (Bullet b : new ArrayList<>(clientWorld.getBullets())) {
                         if (b != null) {
                             if (b.objectId == packetRemoveBullet.getId() && b.playerName.equals(packetRemoveBullet.getPlayerName())) {
                                 clientWorld.getBullets().remove(b);
@@ -181,13 +158,7 @@ public class ClientConnection {
                         }
                     }
                 } else if (object instanceof PacketAddBoost) {
-                    Gdx.app.postRunnable(new Runnable() {
-                        @Override
-                        public void run() {
-                            PacketAddBoost boost = (PacketAddBoost) object;
-                            clientWorld.addBoost(boost);
-                        }
-                    });
+                    PacketAddBoost boost = (PacketAddBoost) object;
 
                 } else if (object instanceof PacketRemoveBoost) {
                     PacketRemoveBoost removeBoost = (PacketRemoveBoost) object;
@@ -199,32 +170,18 @@ public class ClientConnection {
                         clientWorld.getEnemyAIList().clear();
                     }
                     for (final PacketAddEnemyAI enemyAI : enemiesAI.getEnemies()) {
-                        Gdx.app.postRunnable(new Runnable() {
-                            @Override
-                            public void run() {
-                                final EnemyAI enemyBot = EnemyAI.createEnemyAI(enemyAI.getX(), enemyAI.getY(), enemyAI.getAngle(), enemyAI.getHealth(), enemyAI.getFollowPlayer());
-                                enemyBot.setId(enemyAI.getId());
-                                clientWorld.addEnemy(enemyAI.getId(), enemyBot);
-                            }
-                        });
+                        EnemyAI enemyBot = new EnemyAI(enemyAI.getX(), enemyAI.getY(), enemyAI.getAngle());
+                        enemyBot.setId(enemyAI.getId());
+                        clientWorld.addEnemy(enemyAI.getId(), enemyBot);
                     }
                 } else if (object instanceof PacketListBoosts) {
                     PacketListBoosts boosts = (PacketListBoosts) object;
                     if (boosts.isRemoveUnused()) {
                         clientWorld.clearBoosts();
                     }
-                    for (final PacketAddBoost packetAddBoost : boosts.getBoostList()) {
-                        Gdx.app.postRunnable(new Runnable() {
-                            @Override
-                            public void run() {
-                                clientWorld.addBoost(packetAddBoost);
-                            }
-                        });
-                    }
                 } else if (object instanceof PacketGameStartInfo) {
                     PacketGameStartInfo gameMessage = (PacketGameStartInfo) object;
                     clientWorld.setGameMessage(gameMessage.getMessage());
-                    Player player = gameScreen.getPlayer();
                     if (gameMessage.getScoreText() != null) {
                         clientWorld.setScoreText(gameMessage.getScoreText(), playerName);
                     }
@@ -248,26 +205,18 @@ public class ClientConnection {
                                 player.getWeapon().setMinDmg(10);
                             } else if (gameMessage.getMessage().contains("Server")) {
                                 client.close();
-                                Gdx.app.postRunnable(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        gameClient.dispose();
-                                        gameClient.startConnect();
-                                    }
-                                });
                                 showDialogMessage("Server is full, wait game end");
                             }
                         }
                     }
                 } else if (object instanceof PacketPlayerPosition) {
                     PacketPlayerPosition playerPosition = (PacketPlayerPosition) object;
-                    Player player = gameScreen.getPlayer();
                     player.setPosition(playerPosition.getX(), playerPosition.getY());
                     player.setHealth(100);
                 } else if (object instanceof PacketAddScore) {
                     PacketAddScore addScore = (PacketAddScore) object;
-                    gameScreen.getPlayer().addScore(addScore.getScore());
-                    System.out.println("Score: " + gameScreen.getPlayer().getScore());
+                    player.addScore(addScore.getScore());
+                    System.out.println("Score: " + player.getScore());
                 }
             }
         });
@@ -342,22 +291,6 @@ public class ClientConnection {
         client.sendTCP(addScore);
     }
 
-    public GameScreen getGameScreen() {
-        return gameScreen;
-    }
-
-    public void setGameScreen(GameScreen gameScreen) {
-        this.gameScreen = gameScreen;
-    }
-
-    public GameClient getGameClient() {
-        return gameClient;
-    }
-
-    public void setGameClient(GameClient gameClient) {
-        this.gameClient = gameClient;
-    }
-
     public String getPlayerName() {
         return playerName;
     }
@@ -374,16 +307,16 @@ public class ClientConnection {
         this.client = client;
     }
 
-    public ClientWorld getClientWorld() {
+    public TestClientWorld getClientWorld() {
         return clientWorld;
     }
 
-    public void setClientWorld(ClientWorld clientWorld) {
+    public void setClientWorld(TestClientWorld clientWorld) {
         this.clientWorld = clientWorld;
     }
 
     public static void main(String[] args) {
-        new ClientConnection();
+        new TestClient();
     }
 
     public void showDialogMessage(String message) {

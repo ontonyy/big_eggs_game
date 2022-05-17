@@ -243,14 +243,12 @@ public class TestServer {
         PacketListBoosts listBoosts = new PacketListBoosts();
         listBoosts.setBoostList(boosts);
         listBoosts.setRemoveUnused(deleteUnused);
-        server.sendToAllTCP(listBoosts);
     }
 
     public void sendPacketListEnemies() {
         PacketListEnemiesAI enemiesAI = new PacketListEnemiesAI();
         enemiesAI.setEnemies(new LinkedList<>(serverWorld.getEnemies().values()));
         enemiesAI.setRemoveUnused(true);
-        server.sendToAllTCP(enemiesAI);
     }
 
     /**

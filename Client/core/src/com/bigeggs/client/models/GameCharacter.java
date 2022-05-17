@@ -7,7 +7,6 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
@@ -15,6 +14,7 @@ import com.badlogic.gdx.math.*;
 import com.bigeggs.client.world.ClientWorld;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
 
@@ -45,40 +45,39 @@ public class GameCharacter {
     public int health = 100;
     public int lives = 5;
     public boolean dead = false;
-    public String direction = "up";
+    public String direction = "none";
 
     public float oldX;
     public float oldY;
 
     //sounds
     protected Sound step;
-    //protected Sound oof;
     protected Sound shot;
     protected Sound letsGo;
     private Music music;
 
     protected Float TimeToNextStep = 12f;
-    //protected Float TimeToNextOof = 0.5f;
     protected Float TimeToNextShot = 0.15f;
     protected Float TimeToNextAaa = 8f;
 
+    //abstract box parameters
     public Float abstractX = 0f;
     public Float abstractY = 0f;
     public Float abstractWidth = 37f;
     public Float abstractHeight = 40f;
-    //position.x - 15, position.y - 12, 37, 40
     public Float playerModelScale = 1f;
-
+    private Map<String, Integer> collideMap = new LinkedHashMap<>();
 
     /**
      * Constructor will set many variables.
-     * @param x of position
-     * @param y of position
-     * @param size of character
-     * @param angle initial of character
-     * @param name of character
+     *
+     * @param x             of position
+     * @param y             of position
+     * @param size          of character
+     * @param angle         initial of character
+     * @param name          of character
      * @param collisonLayer that will collide with character
-     * @param textureName for character
+     * @param textureName   for character
      */
     public GameCharacter(float x, float y, float size, float angle, String name, MapLayer collisonLayer, String textureName) {
         this.position = new Vector2();
@@ -95,8 +94,8 @@ public class GameCharacter {
         Random rand = new Random();
         boost = rand.nextDouble();
         speed = 5;
+
         step = Gdx.audio.newSound(Gdx.files.internal("SoundEffects/steps.mp3"));
-        //oof = Gdx.audio.newSound(Gdx.files.internal("SoundEffects/oof.mp3"));
         shot = Gdx.audio.newSound(Gdx.files.internal("SoundEffects/shot.mp3"));
         letsGo = Gdx.audio.newSound(Gdx.files.internal("SoundEffects/okLetsGo.mp3"));
 
@@ -124,15 +123,18 @@ public class GameCharacter {
 
     /**
      * Main loop method of every character, will render every delta seconds
+     *
      * @param batch help to draw texture
      */
     public void render(Batch batch) {
+        // sets player image and abstract box sizes based on player's HP
         if (health >= 180) {
             playerModelScale = 1.6f;
             abstractX = position.x - 24;
             abstractY = position.y - 19.2f;
             abstractWidth = 59f;
             abstractHeight = 64f;
+            // Move bullets source point outside abstract box, so that bullet does not collide with it's own player
             barrelOffset = new Vector2(83.0f, -48.0f).scl(0.5f);
 
         } else if (health > 140 && health < 171) {
@@ -206,13 +208,17 @@ public class GameCharacter {
      * Movement with collision controlling and sound reproducing
      */
     public void move() {
+        // game start sound "ok lets go
         if (TimeToNextStep == 12f) {
             letsGo.play(0.5f);
         }
+
+        // step sounds loop
         if (oldY != position.y || oldX != position.x) {
+            // check if player is moving
+
             if (TimeToNextStep == 1.5f) {
                 step.play(2f);
-
             }
             TimeToNextStep -= 0.1f;
             if (TimeToNextStep <= 0f) {
@@ -221,6 +227,8 @@ public class GameCharacter {
         } else {
             TimeToNextStep = 1.5f;
         }
+
+
         oldX = position.x;
         oldY = position.y;
         abstractBox = new Rectangle(abstractX, abstractY, abstractWidth, abstractHeight);
@@ -233,6 +241,8 @@ public class GameCharacter {
             boost = rand.nextDouble();
         }
         if (!isCollisionWithWall() && !isPlayerCollision() && !isAiBotCollision()) {
+            // if player does not interact with other objects
+            this.direction = "none";
             if (Gdx.input.isKeyPressed(Input.Keys.A) && Gdx.input.isKeyPressed(Input.Keys.W)) {
                 position.y += speed;
                 position.x -= speed;
@@ -261,97 +271,51 @@ public class GameCharacter {
             } else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
                 position.y -= speed;
                 this.direction = "down";
+            } else {
+                this.direction = "none";
             }
 
         } else {
-
+            // if player interacts with other objects
             switch (this.direction) {
                 case "left":
-                    position.x += 0.5 + boost;
+                    position.x += boost;
                     break;
                 case "right":
-                    position.x -= 0.5 + boost;
+                    position.x -= boost;
                     break;
                 case "up":
-                    position.y -= 0.5 + boost;
+                    position.y -= boost;
                     break;
                 case "down":
-                    position.y += 0.5 + boost;
+                    position.y += boost;
                     break;
                 case "up-left":
-                    position.y -= 0.5 + boost;
-                    position.x += 0.5 + boost;
+                    position.y -= boost;
+                    position.x += boost;
                     break;
                 case "down-left":
-                    position.y += 0.5 + boost;
-                    position.x += 0.5 + boost;
+                    position.y += boost;
+                    position.x += boost;
                     break;
                 case "up-right":
-                    position.y -= 0.5 + boost;
-                    position.x -= 0.5 + boost;
+                    position.y -= boost;
+                    position.x -= boost;
                     break;
                 case "down-right":
-                    position.y += 0.5 + boost;
-                    position.x -= 0.5 + boost;
+                    position.y += boost;
+                    position.x -= boost;
                     break;
-
             }
 
         }
-        if (isCollisionWithWall()) {
-            switch (this.direction) {
-                case "left":
-                    position.x += 0.5 + boost;
-                    break;
-                case "right":
-                    position.x -= 0.5 + boost;
-                    break;
-                case "up":
-                    position.y -= 0.5 + boost;
-                    break;
-                case "down":
-                    position.y += 0.5 + boost;
-                    break;
-                case "up-left":
-                    position.y -= 0.5 + boost;
-                    position.x += 0.5 + boost;
-                    break;
-                case "down-left":
-                    position.y += 0.5 + boost;
-                    position.x += 0.5 + boost;
-                    break;
-                case "up-right":
-                    position.y -= 0.5 + boost;
-                    position.x -= 0.5 + boost;
-                    break;
-                case "down-right":
-                    position.y += 0.5 + boost;
-                    position.x -= 0.5 + boost;
-                    break;
-
-            }
-
-        }
-/*        if (isPlayerCollision() || isAiBotCollision() || isCollisionWithWall()){
-            if (oldY != position.y || oldX != position.x) {
-                if (TimeToNextOof == 0.5f) {
-                    oof.play(0.4f);
-                }
-                TimeToNextOof -= 0.1f;
-                if (TimeToNextOof <= 0f) {
-                    TimeToNextOof = 0.5f;
-                }
-            } else {
-                TimeToNextOof = 0.5f;
-            }
-        }*/
-
     }
 
     /**
      * Bullet creation by delta time controlling
+     *
      * @param mousePos of player global mouse
-     * @param name of player
+     * @param name     of player
      * @return bullet or null
      */
     public Bullet createBullet(Vector2 mousePos, String name) {
@@ -379,13 +343,14 @@ public class GameCharacter {
 
     /**
      * Collision controlling with wall
+     *
      * @return boolean | true if collide with wall
      */
     public boolean isCollisionWithWall() {
         MapObjects objects = collisionLayer.getObjects(); //get objects
         for (RectangleMapObject rectangleObject : objects.getByType(RectangleMapObject.class)) { //get rectangle objects
             Rectangle rectangle = rectangleObject.getRectangle();
-            if (rectangle.overlaps(abstractBox)) {
+            if (rectangle.overlaps(abstractBox)) { // check collision between map objects and players abstract box
                 return true;
             }
         }
@@ -412,38 +377,30 @@ public class GameCharacter {
 
     /**
      * Collision with others players in server
+     *
      * @return boolean | true if collide other players in server
      */
     public boolean isPlayerCollision() {
+        // check player's collision with other players
         Map<Integer, Player> players = world.getPlayers();
-        for (Player player : players.values()) {
-            Rectangle enemyabstractBox = new Rectangle(player.getPosition().x - 12, player.getPosition().y - 8, 35, 35);
-            String enemyDirection = player.getDirection();
-            switch (enemyDirection) {
-                case "up":
-                    this.direction = "down";
-                    break;
-                case "down":
-                    this.direction = "up";
-                    break;
-                case "right":
-                    this.direction = "left";
-                    break;
-                case "up-left":
-                    this.direction = "down-right";
-                    break;
-                case "down-left":
-                    this.direction = "up-right";
-                    break;
-                case "up-right":
-                    this.direction = "down-left";
-                    break;
-                case "down-right":
-                    this.direction = "up-left";
-                    break;
+        for (Player player : players.values()) {// get all players
+            // create enemy abstract box
+            if (!collideMap.containsKey(player.name)) {
+                collideMap.put(player.name, 0);
             }
+            Rectangle enemyabstractBox = new Rectangle(player.getPosition().x - 12,
+                    player.getPosition().y - 8, 35, 35);
+            String enemyDirection = player.getDirection();
+            // change player's direction based on the other (collided) player's direction
             if (enemyabstractBox.overlaps(abstractBox)) {
+                collideMap.put(player.name, collideMap.get(player.name) + 1);
+                if (collideMap.get(player.name) == 500) {
+                    position.x = position.x + 60;
+                    collideMap.put(player.name, 0);
+                }
                 return true;
+            } else {
+                collideMap.put(player.name, 0);
             }
 
         }
@@ -452,17 +409,17 @@ public class GameCharacter {
 
     /**
      * Collision controlling with enemyAIs in server
+     *
      * @return boolean | true if collide with some enemyAI in server
      */
     public boolean isAiBotCollision() {
         Map<Integer, EnemyAI> enemyAIList = world.getEnemyAIList();
-        for (EnemyAI bot : enemyAIList.values()) {
+        for (EnemyAI bot : enemyAIList.values()) { //get all BOT's
             Rectangle enemyabstractBox = new Rectangle(bot.getPosition().x - 12, bot.getPosition().y - 8, 35, 35);
-            String enemyDirection = bot.getDirection();
-
+            // make Bot's abstract box
             if (enemyabstractBox.overlaps(abstractBox)) {
                 bot.speed = 0;
-                bot.followPlayer = "./;[p[p";
+                bot.followPlayer = "./;[p[p"; // bot does not follow player for a moment
                 return true;
             }
         }
@@ -474,12 +431,17 @@ public class GameCharacter {
         return world;
     }
 
+    public Vector2 getBarrelPosition() {
+        return barrelPosition;
+    }
+
     public void setWorld(ClientWorld world) {
         this.world = world;
     }
 
     /**
      * Changing angle of character by mouse
+     *
      * @param mousePos 3D global mouse position
      */
     public void rotate(Vector3 mousePos) {
@@ -541,7 +503,6 @@ public class GameCharacter {
     public void dispose() {
         picture.dispose();
         step.dispose();
-        //oof.dispose();
         letsGo.dispose();
         shot.dispose();
         music.dispose();

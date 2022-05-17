@@ -1,7 +1,6 @@
 package com.bigeggs.client.screens;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
@@ -45,7 +44,7 @@ public class ConnectScreen implements Screen {
 
     private final Table root;
 
-    private boolean flag = false;
+    private boolean showControlsFlag = false;
 
     /**
      * Constructor with setting all needed variables
@@ -64,9 +63,11 @@ public class ConnectScreen implements Screen {
         font2.getData().setScale(2f);
         font.getData().scale(5f);
         username = new TextField("Username", skin);
+
         connectButton = new TextButton("Connect", skin);
         quitButton = new TextButton("Quit", skin);
         tutorialButton = new TextButton("Controls", skin);
+
         music = Gdx.audio.newMusic(Gdx.files.internal("SoundEffects/menuMusic.mp3"));
         music.setVolume(0.05f);
         music.setLooping(true);
@@ -130,7 +131,7 @@ public class ConnectScreen implements Screen {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 buttonSound.play();
-                flag = !flag;
+                showControlsFlag = !showControlsFlag; //change state for showing game controls
                 return super.touchDown(event, x, y, pointer, button);
             }
         });
@@ -150,13 +151,12 @@ public class ConnectScreen implements Screen {
         gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.begin();
         sprite3.draw(batch);
-        //font.draw(batch, "Cold line Tallinn", 300, 500);
         batch.end();
         stage.draw();
         stage.act(delta);
 
 
-        if (flag) {
+        if (showControlsFlag) { // draw game controls
             batch2.begin();
             sprite.draw(batch2);
             sprite2.draw(batch2);

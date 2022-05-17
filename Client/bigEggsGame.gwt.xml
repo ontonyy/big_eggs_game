@@ -1,0 +1,5 @@
+<module>
+    <source path="core/src" />
+    <source path="core" />
+    <source path="desktop" />
+</module>

@@ -1,6 +1,5 @@
 package Packets;
 
-
 import Packets.add.*;
 import Packets.remove.PacketRemoveBoost;
 import Packets.remove.PacketRemoveBullet;
@@ -9,6 +8,9 @@ import Packets.update.PacketPlayerPosition;
 import Packets.update.PacketUpdateEnemyAI;
 import Packets.update.PacketUpdatePlayerInfo;
 
+/**
+ * Creator for different packets that will be sent between client-server
+ */
 public class PacketCreator {
 
     public static PacketAddPlayer createPacketAddPlayer(String name) {
@@ -31,18 +33,14 @@ public class PacketCreator {
         return packetPlayerInfo;
     }
 
-    public static PacketRemovePlayer createPacketRemovePlayer(int id) {
-        PacketRemovePlayer removePlayer = new PacketRemovePlayer();
-        removePlayer.setId(id);
-        return removePlayer;
-    }
-
-    public static PacketBullet createPacketBullet(float posX, float posY, float dirX, float dirY) {
+    public static PacketBullet createPacketBullet(float posX, float posY, float dirX, float dirY, String name, int id) {
         PacketBullet packetBullet = new PacketBullet();
-        packetBullet.setPositionX(posX);
-        packetBullet.setPositionY(posY);
         packetBullet.setDirectionX(dirX);
         packetBullet.setDirectionY(dirY);
+        packetBullet.setPositionX(posX);
+        packetBullet.setPositionY(posY);
+        packetBullet.setId(id);
+        packetBullet.setPlayerName(name);
         return packetBullet;
     }
 
@@ -51,6 +49,12 @@ public class PacketCreator {
         packetRemoveBullet.setId(id);
         packetRemoveBullet.setPlayerName(name);
         return packetRemoveBullet;
+    }
+
+    public static PacketRemovePlayer createPacketRemovePlayer(int id) {
+        PacketRemovePlayer removePlayer = new PacketRemovePlayer();
+        removePlayer.setId(id);
+        return removePlayer;
     }
 
     public static PacketAddEnemyAI createPacketEnemyAI(float x, float y, float angle, int health, int id, String follow) {
@@ -92,18 +96,18 @@ public class PacketCreator {
 
     public static PacketPlayerPosition createPacketPlayerPosition(boolean change, int x, int y) {
         PacketPlayerPosition packetPosition = new PacketPlayerPosition();
-        packetPosition.setChange(true);
+        packetPosition.setChange(change);
         packetPosition.setX(x);
         packetPosition.setY(y);
         return packetPosition;
     }
 
-    public static PacketAddScore createPacketAddScore(int score, int id, int lives) {
+    public static PacketAddScore createPacketAddScore(int score, int id, int lives, String name) {
         PacketAddScore addScore = new PacketAddScore();
         addScore.setScore(score);
-        addScore.setId(id);
         addScore.setKilledPlayerLives(lives);
+        addScore.setPlayerName(name);
+        addScore.setId(id);
         return addScore;
     }
-
 }

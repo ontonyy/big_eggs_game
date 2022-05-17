@@ -161,14 +161,17 @@ public class Player extends GameCharacter {
      */
     public void damage(String damagePlayerName) {
         if (health <= 0) {
-            if (lives == 1 && !dead) clientConnection.sendPacketAddScore(100, world.getPlayerId(damagePlayerName), lives, damagePlayerName);
+            if (lives == 1 && !dead) {
+                if (world.getPlayerId(damagePlayerName) != -1) {
+                    clientConnection.sendPacketAddScore(100, world.getPlayerId(damagePlayerName), lives, damagePlayerName);
+                }
+            }
 
             if (lives <= 1) {
                 dead = true;
             } else {
                 clientConnection.sendPacketPlayerPosition(true);
-                int id = world.getPlayerId(damagePlayerName);
-                if (id != -1) {
+                if (world.getPlayerId(damagePlayerName) != -1) {
                     clientConnection.sendPacketAddScore(100, world.getPlayerId(damagePlayerName), lives, damagePlayerName);
                 }
                 health = 100;

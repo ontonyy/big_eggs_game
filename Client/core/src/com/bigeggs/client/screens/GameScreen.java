@@ -41,6 +41,7 @@ public class GameScreen implements Screen, InputProcessor {
     ShapeRenderer shapeRenderer;
     private TextureRegion backgroundTexture;
     private MapLayer collisionLayer;
+    private long time = System.currentTimeMillis();
 
     private OrthogonalTiledMapRenderer tmr;
     private TiledMap map;
@@ -56,10 +57,9 @@ public class GameScreen implements Screen, InputProcessor {
     private Sprite sprite, liveSprite;
     private String healthbar = "healthBars/100hp.png";
     private Integer previousHealth = 100;
-    private Float previousX = 750f;
-    private Float previousY = 850f;
 
 
+    private Random rand = new Random();
     protected Sound ammoBoostSound;
     protected Sound healthBoostSound;
     protected Sound speedBoostSound;
@@ -77,8 +77,8 @@ public class GameScreen implements Screen, InputProcessor {
         map = new TmxMapLoader().load("newTiledMap.tmx");
         tmr = new OrthogonalTiledMapRenderer(map, 1);
         collisionLayer = map.getLayers().get("Objects");
-
-        player = new Player(750f, 850f, 0f, "kamikadze", (MapLayer) map.getLayers().get("Objects"), "playerIcons/1.png");
+        int value = rand.nextInt(10 + 1) + 1;
+        player = new Player(750f + value * 5f, 850f, 0f, "kamikadze", (MapLayer) map.getLayers().get("Objects"), "playerIcons/1.png");
         player.setWeapon(new Weapon());
         player.setWorld(world);
 
@@ -143,7 +143,7 @@ public class GameScreen implements Screen, InputProcessor {
     @Override
     public void render(float delta) {
         ScreenUtils.clear(1, 1, 1, 1);
-        if (player.health != previousHealth) {
+        if (player.health != previousHealth) { // if HP have changed, update health bar image
             previousHealth = player.health;
             updateHealthBar();
         }
@@ -153,7 +153,9 @@ public class GameScreen implements Screen, InputProcessor {
         player.rotate(getMousePosInGameWorld());
         player.changeFireMode();
         player.reload();
-        player.createBullet(new Vector2(getMousePosInGameWorld().x - player.getPosition().x, getMousePosInGameWorld().y - player.getPosition().y).nor(), player.name);
+        player.createBullet(new Vector2(getMousePosInGameWorld().x - player.getPosition().x,
+                getMousePosInGameWorld().y - player.getPosition().y).nor(), player.name);
+        botShooting();
 
         // rotate and move enemy to player
         moveAndRotateEnemiesAI();
@@ -277,13 +279,14 @@ public class GameScreen implements Screen, InputProcessor {
     public void drawOtherPlayers() {
         List<Player> players = new ArrayList<>(world.getPlayers().values());
         for (Player player1 : players) {
-            if (!player1.isInvisible()) {
-                if (player1.health >= 180) {
+            if (!player1.isInvisible()) { // draw other players
+                if (player1.health >= 180) { // check HP and set image size and abstract box parameters  based on HP
                     player1.playerModelScale = 1.6f;
                     player1.abstractX = player1.position.x - 24;
                     player1.abstractY = player1.position.y - 19.2f;
                     player1.abstractWidth = 59f;
                     player1.abstractHeight = 64f;
+                    // Move bullets source point outside abstract box, so that bullet does not collide with it's own player
                     player1.barrelOffset = new Vector2(83.0f, -48.0f).scl(0.5f);
                 } else if (player1.health > 140 && player1.health < 171) {
                     player1.playerModelScale = 1.4f;
@@ -350,6 +353,9 @@ public class GameScreen implements Screen, InputProcessor {
         }
     }
 
+    /**
+     * Update position of all existing bullets
+     */
     public void updateBullets() {
         List<Bullet> bullets = new ArrayList<>(world.getBullets());
         for (Bullet b : bullets) {
@@ -372,6 +378,11 @@ public class GameScreen implements Screen, InputProcessor {
         }
     }
 
+    /**
+     * Check bullet collision with player.
+     * @param r bullet's abstract box
+     * @param b bullet
+     */
     public void isCollisionWithPlayer(Rectangle r, Bullet b) {
         if (player.abstractBox.overlaps(r)) {
             player.damage(b.playerName);
@@ -380,6 +391,11 @@ public class GameScreen implements Screen, InputProcessor {
         }
     }
 
+    /**
+     * Check if bullet collides with bot
+     * @param r bullet's abstract box
+     * @param b bullet
+     */
     public void isCollisionWithEnemyAI (Rectangle r, Bullet b) {
         for (EnemyAI e : world.getEnemyAIList().values()) {
             if (e.abstractBox.overlaps(r)) {
@@ -393,6 +409,10 @@ public class GameScreen implements Screen, InputProcessor {
         }
     }
 
+    /**
+     * Draw bullets on the game screen
+     * @param shapeRenderer renders bullets on game screen
+     */
     public void drawBullets(ShapeRenderer shapeRenderer) {
         List<Bullet> bullets = new ArrayList<>(world.getBullets());
         for (Bullet b : bullets) {
@@ -449,6 +469,12 @@ public class GameScreen implements Screen, InputProcessor {
         player.setTexture("playerIcons/" + world.getSkinId() + ".png");
     }
 
+    /**
+     * Check if bullet collides with wall
+     * @param abstractBox Bullet's abstract box
+     * @param b bullet
+     * @return boolean(true, if bullet collides with wall)
+     */
     public boolean isCollisionWithWall(Rectangle abstractBox, Bullet b) {
         MapObjects objects = collisionLayer.getObjects(); //get objects
         for (RectangleMapObject rectangleObject : objects.getByType(RectangleMapObject.class)) {
@@ -470,6 +496,25 @@ public class GameScreen implements Screen, InputProcessor {
         fontParameter.size = size;
         fontParameter.color = color;
         return fontGenerator.generateFont(fontParameter);
+    }
+
+    /**
+     * Bots shoot if see player
+     */
+    public void botShooting() {
+        Map<Integer, EnemyAI> bots = new HashMap<>(world.getEnemyAIList());
+        for (EnemyAI bot : bots.values()) {
+            String name = Integer.toString(bot.getId());
+            if (bot.followPlayer.equals(player.name)) {
+                Bullet bullet = bot.shoot(player, name, time);
+                if (bullet != null) {
+                    time = System.currentTimeMillis();
+                    world.getBullets().add(bullet);
+                    clientConnection.addBullet(bullet.position.x, bullet.position.y, bullet.direction.x,
+                            bullet.direction.y, name, bullet.objectId);
+                }
+            }
+        }
     }
 
     @Override
